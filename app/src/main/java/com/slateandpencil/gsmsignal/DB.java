@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 
@@ -17,6 +18,7 @@ public class DB extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "SignalDB";
     public static final String SIGNAL_TABLE_NAME = "signal";
     public static final String SIGNAL_ID = "id";
+    public static final String TIMESTAMP = "time";
     public static final String SIGNAL_RSSI = "rssi";
     public static final String SIGNAL_BER = "ber";
     public static final String SIGNAL_LOCATION = "loc";
@@ -28,7 +30,7 @@ public class DB extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE signal (id integer primary key, rssi text, ber text, loc text)");
+        db.execSQL("CREATE TABLE signal (id integer primary key,time text, rssi text, ber text, loc text, cid text)");
     }
 
     @Override
@@ -36,9 +38,15 @@ public class DB extends SQLiteOpenHelper {
         db.execSQL("DELETE * FROM signal");
     }
 
-    public void insert(String rssi,String ber,String cid,String loc) {
+    public void reset(SQLiteDatabase db) {
+        db.execSQL("DELETE * FROM signal");
+    }
+
+    public void insert(String time,String rssi,String ber,String cid,String loc) {
+        Log.e("Checkpoint","INserting into DB");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(TIMESTAMP,time);
         values.put(SIGNAL_RSSI,rssi);
         values.put(SIGNAL_BER,ber);
         values.put(SIGNAL_CID,cid);
