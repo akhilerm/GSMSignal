@@ -31,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
     Boolean isRunning;
     TextView textView;
     DB db;
-    final int MY_PERMISSIONS_REQUEST_WRITE=20;
-    final int MY_PERMISSIONS_REQUEST_LOC=30;
     final int MULIPLE_PERMISSIONS=50;
+    final SharedPreferences sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPreferences.edit();
 
 
     @Override
@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         final FloatingActionButton control = (FloatingActionButton) findViewById(R.id.control);
-        final SharedPreferences sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
         final FloatingActionButton export = (FloatingActionButton) findViewById(R.id.export);
         textView = (TextView)findViewById(R.id.text);
 
@@ -72,18 +71,17 @@ public class MainActivity extends AppCompatActivity {
         control.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
                 if (isRunning) {
                     isRunning = false;
                     control.setImageResource(R.drawable.ic_play_arrow_white_24dp);
                     stopDataFetch();
                     Snackbar.make(v, "Data Fetch Terminated", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
                 } else {
-                    isRunning = true;
-                    control.setImageResource(R.drawable.ic_stop_white_24dp);
                     if (ContextCompat.checkSelfPermission(MainActivity.this,
                             Manifest.permission.ACCESS_COARSE_LOCATION)
                             == PackageManager.PERMISSION_GRANTED) {
+                        isRunning = true;
+                        control.setImageResource(R.drawable.ic_stop_white_24dp);
                         startDataFetch();
                         Snackbar.make(v, "Data Fetch Initiated", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
                     }
@@ -128,16 +126,32 @@ public class MainActivity extends AppCompatActivity {
     public void exportAsCSV() {
         Log.e("Checkpoint","exporting");
         SQLiteDatabase sqLiteDatabase = (new DB(this).getReadableDatabase());
+        int count = sharedPreferences.getInt("FileNum",0);
         Cursor cursor = null;
         try {
             cursor = sqLiteDatabase.rawQuery("select * from signal",null);
             Log.e("Checkpoint","exporting 1");
             int rowCount;
             int columnCount;
-            File file = Environment.getExternalStorageDirectory();
-
-            String filename = "SigData.csv";
+            File file = new File(Environment.getExternalStorageDirectory(),"GSMData");
+            if(!file.exists()) {
+                file.mkdirs();
+            }
+            String filename = "SigData";
+            if(count != 0) {
+                filename+=(count+1);
+            }
+            count++;
+            editor.putInt("FileNum",count);
+            editor.commit();
+            filename+=".csv";
             File savefile = new File(file,filename);
+            if(savefile.exists()) {
+                Log.e("Chaclpoint","file exist");
+            }
+            else {
+                Log.e("Chaclpoint","file not exist");
+            }
             FileWriter fileWriter = new FileWriter(savefile);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             rowCount = cursor.getCount();
