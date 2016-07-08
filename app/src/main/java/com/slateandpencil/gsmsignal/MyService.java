@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -52,12 +53,14 @@ public class MyService extends Service {
 
     public class myPhoneStateListener extends PhoneStateListener {
         public int signalStrengthValue;
+        public int berValue;
         Calendar calendar = Calendar.getInstance();
         DB db = new DB(MyService.this);
 
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             Log.e("Checkpoint","INside on signal changed");
             super.onSignalStrengthsChanged(signalStrength);
+            GsmCellLocation gsmCellLocation = (GsmCellLocation)telephonyManager.getCellLocation();
             int seconds = calendar.get(Calendar.SECOND);
             int minute = calendar.get(Calendar.MINUTE);
             int hour = calendar.get(calendar.HOUR_OF_DAY);
@@ -65,7 +68,8 @@ public class MyService extends Service {
             int month = calendar.get(calendar.MONTH);
             int year = calendar.get(calendar.YEAR);
             signalStrengthValue = signalStrength.getGsmSignalStrength();
-            db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Integer.toString(signalStrengthValue),"","","");
+            berValue = signalStrength.getGsmBitErrorRate();
+            db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Integer.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()));
         }
     }
 }
