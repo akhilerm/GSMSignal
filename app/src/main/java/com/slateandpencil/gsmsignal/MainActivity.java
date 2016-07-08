@@ -32,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     TextView textView;
     DB db;
     final int MY_PERMISSIONS_REQUEST_WRITE=20;
+    final int MY_PERMISSIONS_REQUEST_LOC=30;
+    final int MULIPLE_PERMISSIONS=50;
 
 
     @Override
@@ -56,6 +58,16 @@ public class MainActivity extends AppCompatActivity {
             control.setImageResource(R.drawable.ic_stop_white_24dp);
         }
 
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)!= PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.ACCESS_COARSE_LOCATION},
+                    MULIPLE_PERMISSIONS);
+        }
+
+
 
         control.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,8 +81,16 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     isRunning = true;
                     control.setImageResource(R.drawable.ic_stop_white_24dp);
-                    startDataFetch();
-                    Snackbar.make(v, "Data Fetch Initiated", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+                    if (ContextCompat.checkSelfPermission(MainActivity.this,
+                            Manifest.permission.ACCESS_COARSE_LOCATION)
+                            == PackageManager.PERMISSION_GRANTED) {
+                        startDataFetch();
+                        Snackbar.make(v, "Data Fetch Initiated", Snackbar.LENGTH_SHORT).setAction("Action", null).show();
+                    }
+                    else {
+                        Toast.makeText(MainActivity.this, "Insufficient Permissions", Toast.LENGTH_SHORT).show();
+                    }
+
                 }
                 editor.putBoolean("Status", isRunning);
                 editor.commit();
@@ -82,14 +102,12 @@ public class MainActivity extends AppCompatActivity {
 
                 if (ContextCompat.checkSelfPermission(MainActivity.this,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            MY_PERMISSIONS_REQUEST_WRITE);
-                }
-                else{
+                        == PackageManager.PERMISSION_GRANTED) {
                     exportAsCSV();
                     Snackbar.make(v,"Data exported",Snackbar.LENGTH_SHORT).setAction("Action",null).show();
+                }
+                else {
+                    Toast.makeText(MainActivity.this,"Insufficient Permissions", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -182,12 +200,11 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_WRITE: {
+            case MULIPLE_PERMISSIONS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //Permission Granted
-                    exportAsCSV();
                 } else {
                     //Permission Denied
                     Toast.makeText(MainActivity.this, "App does not have enough permissions", Toast.LENGTH_SHORT).show();
