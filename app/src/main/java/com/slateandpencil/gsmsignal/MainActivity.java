@@ -1,6 +1,8 @@
 package com.slateandpencil.gsmsignal;
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,8 +34,9 @@ public class MainActivity extends AppCompatActivity {
     TextView textView;
     DB db;
     final int MULIPLE_PERMISSIONS=50;
-    final SharedPreferences sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPreferences.edit();
+    SharedPreferences sharedPreferences;
+    SharedPreferences.Editor editor;
+    private PendingIntent pendingIntent;
 
 
     @Override
@@ -43,7 +46,8 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         db = new DB(this);
-
+        sharedPreferences = getSharedPreferences("MyPref", MODE_PRIVATE);
+        editor = sharedPreferences.edit();
 
         final FloatingActionButton control = (FloatingActionButton) findViewById(R.id.control);
         final FloatingActionButton export = (FloatingActionButton) findViewById(R.id.export);
@@ -114,12 +118,22 @@ public class MainActivity extends AppCompatActivity {
 
     //Method to start the service
     public void startDataFetch() {
+
         startService(new Intent(getBaseContext(), MyService.class));
+/*        AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        int interval = 8000;
+
+        manager.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),interval, pendingIntent);
+        Toast.makeText(this, "Alarm Set", Toast.LENGTH_SHORT).show();*/
     }
 
     // Method to stop the service
     public void stopDataFetch() {
+
         stopService(new Intent(getBaseContext(), MyService.class));
+       /* AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        manager.cancel(pendingIntent);
+        Toast.makeText(this, "Alarm Canceled", Toast.LENGTH_SHORT).show();*/
     }
 
     //Method to export Data as CSV
@@ -185,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
         catch (Exception e){
             Log.e("Checkpoint",e.getMessage());
         }
+        db.reset();
+        Toast.makeText(MainActivity.this, "Database has been reset", Toast.LENGTH_SHORT).show();
     }
 
     @Override
