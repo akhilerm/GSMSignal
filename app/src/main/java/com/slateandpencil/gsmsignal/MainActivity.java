@@ -17,6 +17,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
+import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -27,6 +31,7 @@ import android.widget.Toast;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -36,8 +41,6 @@ public class MainActivity extends AppCompatActivity {
     final int MULIPLE_PERMISSIONS=50;
     SharedPreferences sharedPreferences;
     SharedPreferences.Editor editor;
-    private PendingIntent pendingIntent;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
 
         final FloatingActionButton control = (FloatingActionButton) findViewById(R.id.control);
         final FloatingActionButton export = (FloatingActionButton) findViewById(R.id.export);
-        textView = (TextView)findViewById(R.id.text);
 
         isRunning = sharedPreferences.getBoolean("Status", false);
 
@@ -120,20 +122,12 @@ public class MainActivity extends AppCompatActivity {
     public void startDataFetch() {
 
         startService(new Intent(getBaseContext(), MyService.class));
-/*        AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        int interval = 8000;
-
-        manager.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(),interval, pendingIntent);
-        Toast.makeText(this, "Alarm Set", Toast.LENGTH_SHORT).show();*/
     }
 
     // Method to stop the service
     public void stopDataFetch() {
 
         stopService(new Intent(getBaseContext(), MyService.class));
-       /* AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        manager.cancel(pendingIntent);
-        Toast.makeText(this, "Alarm Canceled", Toast.LENGTH_SHORT).show();*/
     }
 
     //Method to export Data as CSV
@@ -244,6 +238,4 @@ public class MainActivity extends AppCompatActivity {
             // permissions this app might request
         }
     }
-
-
 }

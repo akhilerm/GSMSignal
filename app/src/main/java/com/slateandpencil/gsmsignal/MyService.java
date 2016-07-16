@@ -54,13 +54,15 @@ public class MyService extends Service {
     public class myPhoneStateListener extends PhoneStateListener {
         public int signalStrengthValue;
         public int berValue;
-        Calendar calendar = Calendar.getInstance();
+
         DB db = new DB(MyService.this);
 
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             Log.e("Checkpoint","INside on signal changed");
             super.onSignalStrengthsChanged(signalStrength);
+            Calendar calendar = Calendar.getInstance();
             GsmCellLocation gsmCellLocation = (GsmCellLocation)telephonyManager.getCellLocation();
+            int milliseconds = calendar.get(Calendar.MILLISECOND);
             int seconds = calendar.get(Calendar.SECOND);
             int minute = calendar.get(Calendar.MINUTE);
             int hour = calendar.get(calendar.HOUR_OF_DAY);
@@ -69,7 +71,8 @@ public class MyService extends Service {
             int year = calendar.get(calendar.YEAR);
             signalStrengthValue = signalStrength.getGsmSignalStrength();
             berValue = signalStrength.getGsmBitErrorRate();
-            db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Integer.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()));
+            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Integer.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()));
+           // Log.e("Value",hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year+Integer.toString(signalStrengthValue));
         }
     }
 }
