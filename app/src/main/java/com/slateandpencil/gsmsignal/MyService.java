@@ -3,6 +3,10 @@ package com.slateandpencil.gsmsignal;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
+import android.os.BatteryManager;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
@@ -17,6 +21,9 @@ public class MyService extends Service {
 
     TelephonyManager telephonyManager;
     myPhoneStateListener psListener;
+    private BatInfoReceiver batInfoReceiver;
+    //SensorManager sensorManager;
+    //Sensor sensor;
 
     public MyService() {
     }
@@ -31,6 +38,8 @@ public class MyService extends Service {
 
     @Override
     public void onCreate(){
+        batInfoReceiver = new BatInfoReceiver();
+        this.registerReceiver(this.batInfoReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         Log.e("Checkpoint","INside on create in service");
 
     }
@@ -48,19 +57,24 @@ public class MyService extends Service {
     @Override
     public void onDestroy(){
         super.onDestroy();
+        this.unregisterReceiver(this.batInfoReceiver);
+        stopSelf();
         Toast.makeText(MyService.this, "Data Fetch Terminated", Toast.LENGTH_SHORT).show();
     }
 
     public class myPhoneStateListener extends PhoneStateListener {
-        public int signalStrengthValue;
+        public float signalStrengthValue;
         public int berValue;
 
         DB db = new DB(MyService.this);
+
 
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             Log.e("Checkpoint","INside on signal changed");
             super.onSignalStrengthsChanged(signalStrength);
             Calendar calendar = Calendar.getInstance();
+            //sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            //sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             GsmCellLocation gsmCellLocation = (GsmCellLocation)telephonyManager.getCellLocation();
             int milliseconds = calendar.get(Calendar.MILLISECOND);
             int seconds = calendar.get(Calendar.SECOND);
@@ -69,10 +83,13 @@ public class MyService extends Service {
             int day = calendar.get(calendar.DAY_OF_MONTH);
             int month = calendar.get(calendar.MONTH);
             int year = calendar.get(calendar.YEAR);
+            //float x = sensor;
+            float temp = batInfoReceiver.get_temp();
             signalStrengthValue = signalStrength.getGsmSignalStrength();
             berValue = signalStrength.getGsmBitErrorRate();
-            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Integer.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()));
-           // Log.e("Value",hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year+Integer.toString(signalStrengthValue));
+            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
+           /* Log.e("Battery info","Current " + BatteryManager.EXTRA_TEMPERATURE + " = " +
+                    temp +  Character.toString ((char) 176) + " C");*/
         }
     }
 }
