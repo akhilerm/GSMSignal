@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.BatteryManager;
 import android.os.IBinder;
@@ -17,13 +19,14 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
-public class MyService extends Service {
+public class MyService extends Service implements SensorEventListener {
 
     TelephonyManager telephonyManager;
     myPhoneStateListener psListener;
     private BatInfoReceiver batInfoReceiver;
-    //SensorManager sensorManager;
-    //Sensor sensor;
+    SensorManager sensorManager;
+    Sensor sensor;
+    float x,y;
 
     public MyService() {
     }
@@ -40,6 +43,8 @@ public class MyService extends Service {
     public void onCreate(){
         batInfoReceiver = new BatInfoReceiver();
         this.registerReceiver(this.batInfoReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Log.e("Checkpoint","INside on create in service");
 
     }
@@ -60,6 +65,18 @@ public class MyService extends Service {
         this.unregisterReceiver(this.batInfoReceiver);
         stopSelf();
         Toast.makeText(MyService.this, "Data Fetch Terminated", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor,int accuracy) {
+        //Implemented Abstract Method
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+           x = sensorEvent.values[0];
+           y = sensorEvent.values[1];
+           Log.e("Inside Sensor Changed",x+" , "+y);
     }
 
     public class myPhoneStateListener extends PhoneStateListener {
@@ -87,9 +104,8 @@ public class MyService extends Service {
             float temp = batInfoReceiver.get_temp();
             signalStrengthValue = signalStrength.getGsmSignalStrength();
             berValue = signalStrength.getGsmBitErrorRate();
-            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
-           /* Log.e("Battery info","Current " + BatteryManager.EXTRA_TEMPERATURE + " = " +
-                    temp +  Character.toString ((char) 176) + " C");*/
+            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp),x+":"+y);
+            Log.e("Motion X,Y",x+" , "+y);
         }
     }
 }

@@ -23,6 +23,7 @@ public class DB extends SQLiteOpenHelper {
     public static final String SIGNAL_BER = "ber";
     public static final String SIGNAL_CID = "cid";
     public static final String TEMP = "temp";
+    public static final String MOT = "motion";
 
     public DB(Context context) {
         super(context,DATABASE_NAME,null,DATABASE_VERSION);
@@ -30,7 +31,7 @@ public class DB extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE signal (id integer primary key,time text, rssi text, ber text, cid text, temp text)");
+        db.execSQL("CREATE TABLE signal (id integer primary key,time text, rssi text, ber text, cid text, temp text, motion text)");
     }
 
     @Override
@@ -43,7 +44,7 @@ public class DB extends SQLiteOpenHelper {
         db.delete(SIGNAL_TABLE_NAME,null,null);
     }
 
-    public void insert(String time,String rssi,String ber,String cid,String temp) {
+    public void insert(String time,String rssi,String ber,String cid,String temp,String mot) {
         Log.e("Checkpoint","INserting into DB");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -52,6 +53,7 @@ public class DB extends SQLiteOpenHelper {
         values.put(SIGNAL_BER,ber);
         values.put(SIGNAL_CID,cid);
         values.put(TEMP,temp);
+        values.put(MOT,mot);
         db.insert(SIGNAL_TABLE_NAME,null,values);
     }
 
