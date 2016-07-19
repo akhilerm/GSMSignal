@@ -43,8 +43,7 @@ public class MyService extends Service implements SensorEventListener {
     public void onCreate(){
         batInfoReceiver = new BatInfoReceiver();
         this.registerReceiver(this.batInfoReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
         Log.e("Checkpoint","INside on create in service");
 
     }
@@ -53,6 +52,8 @@ public class MyService extends Service implements SensorEventListener {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(MyService.this, "Data Fetch Initiated", Toast.LENGTH_SHORT).show();
         Log.e("Checkpoint","INside on startcommand in service");
+        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         psListener = new myPhoneStateListener();
         telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(psListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
@@ -93,7 +94,6 @@ public class MyService extends Service implements SensorEventListener {
             //sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
             //sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             GsmCellLocation gsmCellLocation = (GsmCellLocation)telephonyManager.getCellLocation();
-            int milliseconds = calendar.get(Calendar.MILLISECOND);
             int seconds = calendar.get(Calendar.SECOND);
             int minute = calendar.get(Calendar.MINUTE);
             int hour = calendar.get(calendar.HOUR_OF_DAY);
@@ -104,8 +104,16 @@ public class MyService extends Service implements SensorEventListener {
             float temp = batInfoReceiver.get_temp();
             signalStrengthValue = signalStrength.getGsmSignalStrength();
             berValue = signalStrength.getGsmBitErrorRate();
-            db.insert(hour+":"+minute+":"+seconds+":"+milliseconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp),x+":"+y);
-            Log.e("Motion X,Y",x+" , "+y);
+            int t = db.last_row();
+            if((t+2)%60 == seconds)
+                db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
+            else if ((db.last_row()+2)%60 > seconds) {
+                int i=2;
+                while((t+i)%60>=seconds) {
+                    db.insert(hour+":"+minute+":"+(t+i)+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
+                    i+=2;
+                }
+            }
         }
     }
 }

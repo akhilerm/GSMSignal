@@ -2,6 +2,7 @@ package com.slateandpencil.gsmsignal;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
@@ -23,7 +24,7 @@ public class DB extends SQLiteOpenHelper {
     public static final String SIGNAL_BER = "ber";
     public static final String SIGNAL_CID = "cid";
     public static final String TEMP = "temp";
-    public static final String MOT = "motion";
+    //public static final String MOT = "motion";
 
     public DB(Context context) {
         super(context,DATABASE_NAME,null,DATABASE_VERSION);
@@ -31,7 +32,7 @@ public class DB extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE signal (id integer primary key,time text, rssi text, ber text, cid text, temp text, motion text)");
+        db.execSQL("CREATE TABLE signal (id integer primary key,time text, rssi text, ber text, cid text, temp text)");
     }
 
     @Override
@@ -44,7 +45,17 @@ public class DB extends SQLiteOpenHelper {
         db.delete(SIGNAL_TABLE_NAME,null,null);
     }
 
-    public void insert(String time,String rssi,String ber,String cid,String temp,String mot) {
+    public int last_row() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM signal WHERE id = (SELECT MAX(id) FROM signal)",null);
+        cursor.moveToFirst();
+        String time = cursor.getString(1);
+        String[] part1 = time.split(":");
+        String[] part2 = part1[2].split(" ");
+        return Integer.parseInt(part2[0]);
+    }
+
+    public void insert(String time,String rssi,String ber,String cid,String temp) {
         Log.e("Checkpoint","INserting into DB");
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -53,7 +64,7 @@ public class DB extends SQLiteOpenHelper {
         values.put(SIGNAL_BER,ber);
         values.put(SIGNAL_CID,cid);
         values.put(TEMP,temp);
-        values.put(MOT,mot);
+        //values.put(MOT,mot);
         db.insert(SIGNAL_TABLE_NAME,null,values);
     }
 
