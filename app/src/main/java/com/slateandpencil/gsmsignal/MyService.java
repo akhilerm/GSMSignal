@@ -10,6 +10,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.BatteryManager;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -19,15 +20,14 @@ import android.widget.Toast;
 
 import java.util.Calendar;
 
-public class MyService extends Service implements SensorEventListener {
+public class MyService extends Service {
 
     TelephonyManager telephonyManager;
     myPhoneStateListener psListener;
     private BatInfoReceiver batInfoReceiver;
-    SensorManager sensorManager;
-    Sensor sensor;
-    float x,y;
-
+    PowerManager powerManager;
+    PowerManager.WakeLock wakeLock;
+    boolean flag;
     public MyService() {
     }
 
@@ -51,9 +51,11 @@ public class MyService extends Service implements SensorEventListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(MyService.this, "Data Fetch Initiated", Toast.LENGTH_SHORT).show();
+        powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyWakelockTag");
+        wakeLock.acquire();
+        flag=true;
         Log.e("Checkpoint","INside on startcommand in service");
-        sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         psListener = new myPhoneStateListener();
         telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(psListener,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
@@ -65,19 +67,8 @@ public class MyService extends Service implements SensorEventListener {
         super.onDestroy();
         this.unregisterReceiver(this.batInfoReceiver);
         stopSelf();
+        wakeLock.release();
         Toast.makeText(MyService.this, "Data Fetch Terminated", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor,int accuracy) {
-        //Implemented Abstract Method
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-           x = sensorEvent.values[0];
-           y = sensorEvent.values[1];
-           Log.e("Inside Sensor Changed",x+" , "+y);
     }
 
     public class myPhoneStateListener extends PhoneStateListener {
@@ -104,16 +95,23 @@ public class MyService extends Service implements SensorEventListener {
             float temp = batInfoReceiver.get_temp();
             signalStrengthValue = signalStrength.getGsmSignalStrength();
             berValue = signalStrength.getGsmBitErrorRate();
-            int t = db.last_row();
-            if((t+2)%60 == seconds)
+            if (flag == true ){
+                flag= false;
                 db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
-            else if ((db.last_row()+2)%60 > seconds) {
-                int i=2;
-                while((t+i)%60>=seconds) {
-                    db.insert(hour+":"+minute+":"+(t+i)+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
-                    i+=2;
+            }
+            else{
+                int t = db.last_row();
+                if((t+2)%60 == seconds)
+                    db.insert(hour+":"+minute+":"+seconds+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
+                else if ((db.last_row()+2)%60 > seconds) {
+                    int i=2;
+                    while((t+i)%60>=seconds) {
+                        db.insert(hour+":"+minute+":"+(t+i)+" "+day+"/"+month+"/"+year,Float.toString(signalStrengthValue),Integer.toString(berValue),Integer.toString(gsmCellLocation.getCid()),Float.toString(temp));
+                        i+=2;
+                    }
                 }
             }
+
         }
     }
 }

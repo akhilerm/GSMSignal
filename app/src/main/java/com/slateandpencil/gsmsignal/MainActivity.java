@@ -162,6 +162,7 @@ public class MainActivity extends AppCompatActivity {
             FileWriter fileWriter = new FileWriter(savefile);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
             rowCount = cursor.getCount();
+            Toast.makeText(MainActivity.this,rowCount+" rows written", Toast.LENGTH_SHORT).show();
             columnCount = cursor.getColumnCount();
             if(rowCount > 0) {
                 cursor.moveToFirst();
